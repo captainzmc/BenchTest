@@ -11,8 +11,8 @@ import java.time.Instant;
 public class DuckDBReadQPSTest {
 
   public static void main(String[] args) {
-    String path = "/tmp/test.duckdb";
-    int numQueries = 1000000;
+    String path = "/tmp/test2.duckdb";
+    int numQueries = 100000;
     try {
       path = args[0];
       numQueries = Integer.parseInt(args[1]);
@@ -24,7 +24,7 @@ public class DuckDBReadQPSTest {
     try (Connection connection = DriverManager.getConnection(url)) {
       // Create a test table
       try (Statement stmt = connection.createStatement()) {
-        stmt.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER, value DOUBLE)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, value DOUBLE)");
       }
 
       // Insert some data

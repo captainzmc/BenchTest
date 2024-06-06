@@ -13,7 +13,7 @@ public class RocksDBReadQPSTest {
   public static void main(String[] args) {
     RocksDB.loadLibrary();
     String path = "/tmp/test_rocksdb";
-    int numQueries = 10000;
+    int numQueries = 1000000;
     try {
       path = args[0];
       numQueries = Integer.parseInt(args[1]);

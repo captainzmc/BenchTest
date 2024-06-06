@@ -1,5 +1,8 @@
 package com.zmc.qps;
 
+import org.duckdb.DuckDBAppender;
+import org.duckdb.DuckDBConnection;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -7,20 +10,14 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 
-public class DuckDBWriteQPSTest {
+public class DuckDBAppendWriteQPSTest {
 
   public static void main(String[] args) {
-    String path = "/tmp/test.duckdb";
+    String path = "/tmp/test2.duckdb";
+    String url = "jdbc:duckdb:";
     int numQueries = 1000000;
-    try {
-      path = args[0];
-      numQueries = Integer.parseInt(args[1]);
-    } catch (ArrayIndexOutOfBoundsException e) {
-    }
-    String url = "jdbc:duckdb:" + path;
 
-    try (Connection connection = DriverManager.getConnection(url)) {
-      connection.setAutoCommit(false);
+    try (Connection connection = DriverManager.getConnection(url+path)) {
       // Create a test table
       try (Statement stmt = connection.createStatement()) {
         stmt.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER, value DOUBLE)");
@@ -28,12 +25,14 @@ public class DuckDBWriteQPSTest {
 
       // Measure write QPS
       Instant start = Instant.now();
-      try (Statement stmt = connection.createStatement()) {
+      try (DuckDBAppender appender = ((DuckDBConnection) connection).createAppender("main", "test")) {
         for (int i = 0; i < numQueries; i++) {
-          stmt.execute("INSERT INTO test VALUES (" + i + ", " + Math.random() + ")");
+          appender.beginRow();
+          appender.append(i);
+          appender.append(Math.random());
+          appender.endRow();
         }
       }
-      connection.commit();
       Instant end = Instant.now();
       Duration duration = Duration.between(start, end);
       double qps = (double) numQueries / duration.toMillis() * 1000;

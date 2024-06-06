@@ -7,18 +7,20 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 
-public class DuckDBWriteQPSTest {
+public class DuckDBBatchWriteQPSTest {
 
   public static void main(String[] args) {
     String path = "/tmp/test.duckdb";
     int numQueries = 1000000;
+    int batchSize = 1000000;
     try {
       path = args[0];
       numQueries = Integer.parseInt(args[1]);
+      batchSize = Integer.parseInt(args[2]);
     } catch (ArrayIndexOutOfBoundsException e) {
     }
     String url = "jdbc:duckdb:" + path;
-
+//    String url = "jdbc:duckdb:";
     try (Connection connection = DriverManager.getConnection(url)) {
       connection.setAutoCommit(false);
       // Create a test table
@@ -30,10 +32,13 @@ public class DuckDBWriteQPSTest {
       Instant start = Instant.now();
       try (Statement stmt = connection.createStatement()) {
         for (int i = 0; i < numQueries; i++) {
-          stmt.execute("INSERT INTO test VALUES (" + i + ", " + Math.random() + ")");
+          stmt.addBatch("INSERT INTO test VALUES (" + i + ", " + Math.random() + ")");
+          if (i % batchSize == 0 || i == numQueries - 1) {
+            stmt.executeBatch();
+            connection.commit();
+          }
         }
       }
-      connection.commit();
       Instant end = Instant.now();
       Duration duration = Duration.between(start, end);
       double qps = (double) numQueries / duration.toMillis() * 1000;
